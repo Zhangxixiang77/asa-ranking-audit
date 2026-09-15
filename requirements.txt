@@ -1,0 +1,7 @@
+torch>=2.0
+transformers>=4.36
+soundfile>=0.12
+numpy>=1.24
+scipy>=1.10
+tqdm>=4.65
+resampy>=0.4
