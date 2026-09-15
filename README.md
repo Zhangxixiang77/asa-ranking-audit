@@ -1,5 +1,3 @@
-# ICASSP2027
-
 # Ranking-reliability audit for automated speaking assessment
 
 Code and protocol for *The Hidden Unfairness of Spoken Language Assessment: Error Parity Masks Ranking Gaps Between Children and Adults* (submitted to ICASSP 2027).
@@ -46,8 +44,20 @@ python 03_run_experiments.py --data-dir ./data
 # 4. write the audit report
 python 04_make_report.py --data-dir ./data
 
-# 5. age-bin reliability curve and the confound analyses
+# 5. age-bin reliability curve and the matched-tertile analysis
 python 05_age_analysis.py --data-dir ./data
+
+# 6. variance-matched subsampling (step 3 of the protocol)
+python 06_variance_check.py --data-dir ./data
+
+# 7. end-to-end encoder fine-tuning (B2-FT)
+python 07_finetune_encoder.py --data-dir ./data
+
+# 8. paired bootstrap for the fine-tuning contrast
+python 08_paired_ft_bootstrap.py --data-dir ./data
+
+# figure 1 in the paper
+python plot_figure1.py --data-dir ./data
 ```
 
 Step 1 finds the child/adult threshold from the gap between the two modes of the age distribution, falling back to the median if there is no gap, and prints the histogram so you can check it. Override with `--child-max-age`. It also warns when the test subgroups are badly unbalanced; `--rebalance` re-splits by subgroup while keeping speakers disjoint.
@@ -77,9 +87,19 @@ Results go to a suffixed directory, so the wav2vec2 run is not overwritten. To s
 
 The per-utterance prediction files are the ones to keep. Every table in the paper is computed from them, so a reviewer or a reader can recompute any of it without retraining.
 
-## Models
+## Where each result comes from
 
-`03_run_experiments.py` covers B0 (profile-only), B2 (the profile-blind frozen-encoder baseline), B6 (per-group affine calibration), and Ours (constrained residual calibration). The subgroup-weighted ranking-loss variants and the end-to-end fine-tuning run (B2-FT) are not part of this script; see the training scripts listed in the paper's experiment table.
+| Paper | Script |
+|---|---|
+| Table 1 (score SD by dimension) | `01_prepare_data.py`, also written to the metadata card |
+| Table 2 (main results, both backbones) | `03_run_experiments.py`, `07_finetune_encoder.py` |
+| Table 3, matched score tertiles | `05_age_analysis.py` |
+| Table 3, variance-matched subsampling | `06_variance_check.py` |
+| Table 3, pairwise concordance | `04_make_report.py` |
+| Table 4 (remedy matrix) | `03_run_experiments.py`, `08_paired_ft_bootstrap.py` |
+| Figure 1 (reliability by age bin) | `plot_figure1.py` |
+
+The frozen-encoder family (B0, B2, B6, Ours, and the subgroup-weighted ranking variants B2-Rank and Ours-Rank) trains in `03_run_experiments.py`. B2-FT unfreezes the encoder and trains separately in `07_finetune_encoder.py`, at encoder learning rate 1e-5 and head learning rate 1e-3.
 
 ## Scope
 
